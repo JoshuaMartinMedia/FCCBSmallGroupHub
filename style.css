@@ -44,7 +44,7 @@ body {
   display: grid;
   place-items: center;
   overflow: hidden;
-  background: rgba(255,255,255,.12);
+  background: #ffffff;
 }
 
 .brand-mark img {
