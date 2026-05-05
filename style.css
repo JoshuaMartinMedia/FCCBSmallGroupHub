@@ -41,7 +41,6 @@ body {
   display: grid;
   place-items: center;
   font-size: 28px;
-  background: rgba(255,255,255,.12);
 }
 
 h1, h2, h3, p { margin: 0; }
