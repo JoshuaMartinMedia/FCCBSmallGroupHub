@@ -1,5 +1,5 @@
 
-const CACHE_NAME = "fccb-small-groups-hub-v7";
+const CACHE_NAME = "fccb-small-groups-hub-v6";
 const ASSETS = [
   "./",
   "./index.html",
@@ -8,8 +8,7 @@ const ASSETS = [
   "./data.js",
   "./manifest.json",
   "./icon-192.png",
-  "./icon-512.png",
-  "./logo.png"
+  "./icon-512.png"
 ];
 
 self.addEventListener("install", event => {

@@ -79,6 +79,62 @@ function dayCompletion(dayObj) {
   const p = getProgressForDay(dayObj);
   return Math.round((p.filter(Boolean).length / dayObj.readings.length) * 100);
 }
+
+const BIBLE_COM_BOOKS = {
+  "Genesis": "GEN", "Exodus": "EXO", "Leviticus": "LEV", "Numbers": "NUM", "Deuteronomy": "DEU",
+  "Joshua": "JOS", "Judges": "JDG", "Ruth": "RUT", "1 Samuel": "1SA", "2 Samuel": "2SA",
+  "1 Kings": "1KI", "2 Kings": "2KI", "1 Chronicles": "1CH", "2 Chronicles": "2CH",
+  "Ezra": "EZR", "Nehemiah": "NEH", "Esther": "EST", "Job": "JOB", "Psalms": "PSA",
+  "Proverbs": "PRO", "Ecclesiastes": "ECC", "Song of Songs": "SNG", "Isaiah": "ISA", "Jeremiah": "JER",
+  "Lamentations": "LAM", "Ezekiel": "EZK", "Daniel": "DAN", "Hosea": "HOS", "Joel": "JOL",
+  "Amos": "AMO", "Obadiah": "OBA", "Jonah": "JON", "Micah": "MIC", "Nahum": "NAM",
+  "Habakkuk": "HAB", "Zephaniah": "ZEP", "Haggai": "HAG", "Zechariah": "ZEC", "Malachi": "MAL",
+  "Matthew": "MAT", "Mark": "MRK", "Luke": "LUK", "John": "JHN", "Acts": "ACT",
+  "Romans": "ROM", "1 Corinthians": "1CO", "2 Corinthians": "2CO", "Galatians": "GAL",
+  "Ephesians": "EPH", "Philippians": "PHP", "Colossians": "COL",
+  "1 Thessalonians": "1TH", "2 Thessalonians": "2TH", "1 Timothy": "1TI", "2 Timothy": "2TI",
+  "Titus": "TIT", "Philemon": "PHM", "Hebrews": "HEB", "James": "JAS",
+  "1 Peter": "1PE", "2 Peter": "2PE", "1 John": "1JN", "2 John": "2JN", "3 John": "3JN",
+  "Jude": "JUD", "Revelation": "REV"
+};
+
+function bibleComUrl(book, passage) {
+  const abbr = BIBLE_COM_BOOKS[book];
+  if (!abbr) return null;
+
+  const cleaned = String(passage).trim().replace(/\s+/g, "");
+
+  // Same-chapter verse ranges, e.g. 1:1-17, 119:1-8, 3:14-22
+  let match = cleaned.match(/^(\d+):(\d+)(?:-(\d+))?$/);
+  if (match) {
+    const chapter = match[1];
+    const versePart = match[3] ? `${match[2]}-${match[3]}` : match[2];
+    return `https://www.bible.com/bible/111/${abbr}.${chapter}.${versePart}.NIV`;
+  }
+
+  // Full chapter, e.g. 16, 3, 150
+  match = cleaned.match(/^(\d+)$/);
+  if (match) {
+    return `https://www.bible.com/bible/111/${abbr}.${match[1]}.NIV`;
+  }
+
+  // Multi-chapter or mixed range, e.g. 1-2, 25-26, 22:12-31.
+  // For multi-chapter readings, link to the first chapter.
+  match = cleaned.match(/^(\d+)(?::\d+)?-/);
+  if (match) {
+    return `https://www.bible.com/bible/111/${abbr}.${match[1]}.NIV`;
+  }
+
+  return `https://www.bible.com/bible/111/${abbr}.1.NIV`;
+}
+
+function readingLinkMarkup(reading) {
+  const url = bibleComUrl(reading.book, reading.passage);
+  const text = `<span class="book">${escapeHtml(reading.book)}</span> <span class="passage">${escapeHtml(reading.passage)}</span>`;
+  if (!url) return text;
+  return `<a class="bible-link" href="${url}" target="_blank" rel="noopener noreferrer" title="Open in Bible.com">${text}<span class="external-icon" aria-hidden="true">↗</span></a>`;
+}
+
 function makeReadingCard(dayObj, titlePrefix = "") {
   const card = document.createElement("article");
   card.className = "card day-card";
@@ -106,7 +162,7 @@ function makeReadingCard(dayObj, titlePrefix = "") {
       <input type="checkbox" id="${id}" ${p[index] ? "checked" : ""}>
       <label for="${id}">
         <span class="section-label">${r.section}</span>
-        <span class="book">${r.book}</span> <span class="passage">${r.passage}</span>
+        ${readingLinkMarkup(r)}
       </label>
     `;
     row.querySelector("input").addEventListener("change", e => setProgressForDay(dayObj, index, e.target.checked));
