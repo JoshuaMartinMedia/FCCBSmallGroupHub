@@ -1,39 +1,20 @@
-# FCCB Small Groups Hub
+# FCCB Small Groups Hub v2
 
 A tiny Progressive Web App for small-group Bible reading schedules.
 
-## What is included
+## v2 upgrades
 
-- Today view
-- This Week view
-- Catch Up view
-- Per-reading checkboxes
-- Local progress saved on each person's device
+- Full 12-month Navigators Bible Reading Plan data
+- Active schedule starts with Month 4 on Tuesday, May 5, 2026
+- Mark whole day complete button
+- Clear day button
+- Notes / Reflection section for every reading day
+- Local progress and notes saved privately on each person's device
 - Sunday service and Monday Bible study cards
 - Offline caching after first load
 
-## Current schedule
+## Uploading to GitHub Pages
 
-This first version includes Month 4 of the Navigators Bible Reading Plan and starts on Tuesday, May 5, 2026.
+Replace the existing files in your GitHub repository with these files, then commit changes.
 
-## How to test locally
-
-Open `index.html` in a browser. Some install/offline features require hosting, but the app UI can be tested locally.
-
-## Free hosting option
-
-Upload these files to a GitHub repository and enable GitHub Pages.
-
-Then share the GitHub Pages link with the group.
-
-## Phone install instructions
-
-iPhone:
-1. Open the link in Safari.
-2. Tap Share.
-3. Tap Add to Home Screen.
-
-Android:
-1. Open the link in Chrome.
-2. Tap the three-dot menu.
-3. Tap Add to Home screen or Install app.
+If the app does not update immediately on your phone, close it fully and reopen, or refresh the browser page once.

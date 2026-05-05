@@ -226,3 +226,41 @@ footer {
   .tabs { grid-template-columns: repeat(2, 1fr); }
   .hero { align-items: flex-start; }
 }
+
+.mini-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 8px 0 10px;
+}
+.mini-button {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 8px 10px;
+  background: #f3eadc;
+  color: var(--ink);
+  font-weight: 800;
+  font-size: .85rem;
+}
+.notes {
+  border-top: 1px solid var(--line);
+  margin-top: 8px;
+  padding-top: 12px;
+}
+.notes summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-weight: 900;
+}
+.notes textarea {
+  width: 100%;
+  min-height: 110px;
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px;
+  font: inherit;
+  background: #fffaf0;
+  color: var(--ink);
+  resize: vertical;
+}

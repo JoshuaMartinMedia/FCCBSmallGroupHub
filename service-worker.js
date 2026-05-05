@@ -1,5 +1,5 @@
 
-const CACHE_NAME = "fccb-small-groups-hub-v1";
+const CACHE_NAME = "fccb-small-groups-hub-v2";
 const ASSETS = [
   "./",
   "./index.html",

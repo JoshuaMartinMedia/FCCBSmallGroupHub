@@ -1,88 +1,84 @@
 
 const group = window.FCCB_DATA.groups[0];
-const STORAGE_KEY = "fccb-small-groups-progress-v1";
+const STORAGE_KEY = "fccb-small-groups-progress-v2";
+const NOTES_KEY = "fccb-small-groups-notes-v1";
 const ONE_DAY = 24 * 60 * 60 * 1000;
 
-let progress = loadProgress();
+let progress = loadJson(STORAGE_KEY, {});
+let notes = loadJson(NOTES_KEY, {});
 
-function localDateKey(date) {
-  return date.toISOString().slice(0, 10);
+function loadJson(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) || fallback; }
+  catch { return fallback; }
 }
-
+function saveJson(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
 function parseLocalDate(yyyyMmDd) {
   const [y, m, d] = yyyyMmDd.split("-").map(Number);
   return new Date(y, m - 1, d);
 }
-
+function keyDate(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
 function formatDate(date) {
   return date.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" });
 }
-
-function loadProgress() {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
-  } catch {
-    return {};
-  }
-}
-
-function saveProgress() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
-}
-
 function allReadings() {
-  return group.months.flatMap(month =>
-    month.days.map(day => ({ ...day, month: month.month, label: month.label }))
-  );
+  const startMonth = group.startMonth || 1;
+  const ordered = [
+    ...group.months.filter(m => m.month >= startMonth),
+    ...group.months.filter(m => m.month < startMonth)
+  ];
+  return ordered.flatMap(month => month.days.map(day => ({ ...day, month: month.month, label: month.label })));
 }
-
-function getReadingForDate(date) {
-  const weekday = date.getDay(); // Sun=0, Mon=1, Tue=2...
-  if (weekday === 0) return { type: "event", title: group.sundayService.title, time: group.sundayService.time };
-  if (weekday === 1) return { type: "event", title: group.mondayMeeting.title, time: group.mondayMeeting.time };
-
+function scheduleIndexForDate(date) {
   const start = parseLocalDate(group.startDate);
   const current = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  if (current < start) return { type: "prestart" };
-
-  let readingIndex = 0;
+  if (current < start) return -1;
+  let index = 0;
   for (let d = new Date(start); d <= current; d = new Date(d.getTime() + ONE_DAY)) {
-    if (group.readingDays.includes(d.getDay())) {
-      if (localDateKey(d) === localDateKey(current)) break;
-      readingIndex++;
-    }
+    if (!group.readingDays.includes(d.getDay())) continue;
+    if (keyDate(d) === keyDate(current)) return index;
+    index++;
   }
-
+  return -1;
+}
+function getReadingForDate(date) {
+  const weekday = date.getDay();
+  if (weekday === 0) return { type: "event", title: group.sundayService.title, time: group.sundayService.time };
+  if (weekday === 1) return { type: "event", title: group.mondayMeeting.title, time: group.mondayMeeting.time };
+  const idx = scheduleIndexForDate(date);
+  if (idx < 0) return { type: "prestart" };
   const readings = allReadings();
-  if (readingIndex >= readings.length) return { type: "complete" };
-
-  return {
-    type: "reading",
-    dateKey: localDateKey(current),
-    scheduleIndex: readingIndex,
-    ...readings[readingIndex]
-  };
+  if (idx >= readings.length) return { type: "complete" };
+  return { type: "reading", dateKey: keyDate(date), scheduleIndex: idx, ...readings[idx] };
 }
-
-function getProgressForDay(dayObj) {
-  const key = `m${dayObj.month}-d${dayObj.day}`;
-  return progress[key] || [false, false, false, false];
-}
-
+function progressKey(dayObj) { return `m${dayObj.month}-d${dayObj.day}`; }
+function getProgressForDay(dayObj) { return progress[progressKey(dayObj)] || [false,false,false,false]; }
 function setProgressForDay(dayObj, readingIndex, checked) {
-  const key = `m${dayObj.month}-d${dayObj.day}`;
   const current = getProgressForDay(dayObj);
   current[readingIndex] = checked;
-  progress[key] = current;
-  saveProgress();
+  progress[progressKey(dayObj)] = current;
+  saveJson(STORAGE_KEY, progress);
   render();
 }
-
+function setWholeDay(dayObj, checked) {
+  progress[progressKey(dayObj)] = dayObj.readings.map(() => checked);
+  saveJson(STORAGE_KEY, progress);
+  render();
+}
+function noteKey(dayObj) { return `note-m${dayObj.month}-d${dayObj.day}`; }
+function getNote(dayObj) { return notes[noteKey(dayObj)] || ""; }
+function setNote(dayObj, value) {
+  notes[noteKey(dayObj)] = value;
+  saveJson(NOTES_KEY, notes);
+}
 function dayCompletion(dayObj) {
   const p = getProgressForDay(dayObj);
   return Math.round((p.filter(Boolean).length / dayObj.readings.length) * 100);
 }
-
 function makeReadingCard(dayObj, titlePrefix = "") {
   const card = document.createElement("article");
   card.className = "card day-card";
@@ -91,10 +87,19 @@ function makeReadingCard(dayObj, titlePrefix = "") {
   h.innerHTML = `<span>${titlePrefix}${dayObj.label} · Day ${dayObj.day}</span><span class="day-meta">${dayCompletion(dayObj)}%</span>`;
   card.appendChild(h);
 
-  const p = getProgressForDay(dayObj);
+  const topActions = document.createElement("div");
+  topActions.className = "mini-actions";
+  topActions.innerHTML = `
+    <button class="mini-button complete-day">Mark whole day complete</button>
+    <button class="mini-button clear-day">Clear day</button>
+  `;
+  topActions.querySelector(".complete-day").addEventListener("click", () => setWholeDay(dayObj, true));
+  topActions.querySelector(".clear-day").addEventListener("click", () => setWholeDay(dayObj, false));
+  card.appendChild(topActions);
 
+  const p = getProgressForDay(dayObj);
   dayObj.readings.forEach((r, index) => {
-    const id = `m${dayObj.month}-d${dayObj.day}-r${index}`;
+    const id = `m${dayObj.month}-d${dayObj.day}-r${index}-${Math.random().toString(36).slice(2)}`;
     const row = document.createElement("div");
     row.className = "reading" + (p[index] ? " complete" : "");
     row.innerHTML = `
@@ -108,21 +113,32 @@ function makeReadingCard(dayObj, titlePrefix = "") {
     card.appendChild(row);
   });
 
+  const noteWrap = document.createElement("details");
+  noteWrap.className = "notes";
+  noteWrap.innerHTML = `
+    <summary>Notes / Reflection</summary>
+    <textarea placeholder="Write a private note for this day...">${escapeHtml(getNote(dayObj))}</textarea>
+    <small class="help">Saved privately on this device.</small>
+  `;
+  const textarea = noteWrap.querySelector("textarea");
+  textarea.addEventListener("input", e => setNote(dayObj, e.target.value));
+  card.appendChild(noteWrap);
+
   return card;
 }
-
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+}
 function makeEventCard(event, date) {
   const card = document.createElement("article");
   card.className = "card event-card";
   card.innerHTML = `<p class="eyebrow">${formatDate(date)}</p><h3>${event.title}</h3><p>${event.time}</p><small class="help">No assigned reading today. Use this as a rest, worship, discussion, or catch-up day.</small>`;
   return card;
 }
-
 function renderToday() {
   const today = new Date();
   const item = getReadingForDate(today);
   document.getElementById("dateLabel").textContent = formatDate(today);
-
   const view = document.getElementById("todayView");
   view.innerHTML = "";
 
@@ -143,19 +159,17 @@ function renderToday() {
     view.innerHTML = `<article class="card empty">The first reading appears on Tuesday, May 5, 2026.</article>`;
   } else {
     document.getElementById("todayTitle").textContent = "Plan complete";
-    document.getElementById("todaySub").textContent = "You reached the end of the current loaded schedule.";
+    document.getElementById("todaySub").textContent = "You reached the end of the loaded schedule.";
     document.getElementById("todayPercent").textContent = "✓";
-    view.innerHTML = `<article class="card empty">Month 4 is loaded in this first version. Add more months in data.js as needed.</article>`;
+    view.innerHTML = `<article class="card empty">The full 12-month plan is complete.</article>`;
   }
 }
-
 function weekDates(date) {
   const day = date.getDay();
-  const tuesdayOffset = day >= 2 ? 2 - day : -5 - day; // previous Tuesday
+  const tuesdayOffset = day >= 2 ? 2 - day : -5 - day;
   const tuesday = new Date(date.getFullYear(), date.getMonth(), date.getDate() + tuesdayOffset);
   return [0,1,2,3,4].map(i => new Date(tuesday.getFullYear(), tuesday.getMonth(), tuesday.getDate() + i));
 }
-
 function renderWeek() {
   const view = document.getElementById("weekView");
   view.innerHTML = "";
@@ -166,41 +180,34 @@ function renderWeek() {
     }
   });
 }
-
 function renderCatchup() {
   const view = document.getElementById("catchupView");
   view.innerHTML = "";
-
   const today = new Date();
   const start = parseLocalDate(group.startDate);
   const unfinished = [];
-
   for (let d = new Date(start); d <= today; d = new Date(d.getTime() + ONE_DAY)) {
     if (!group.readingDays.includes(d.getDay())) continue;
     const item = getReadingForDate(d);
-    if (item.type === "reading" && dayCompletion(item) < 100) {
-      unfinished.push({ item, date: new Date(d) });
-    }
+    if (item.type === "reading" && dayCompletion(item) < 100) unfinished.push({ item, date: new Date(d) });
   }
-
   if (!unfinished.length) {
     view.innerHTML = `<article class="card empty">You are caught up on all loaded readings.</article>`;
     return;
   }
-
   unfinished.forEach(({item, date}) => {
     view.appendChild(makeReadingCard(item, `${date.toLocaleDateString(undefined, { month: "short", day: "numeric" })}: `));
   });
 }
-
 function renderSettings() {
   const view = document.getElementById("settingsView");
   view.innerHTML = `
     <article class="card">
       <h3>Settings</h3>
-      <small class="help">This first version starts Tuesday, May 5, 2026, with Month 4 of the reading plan. It stores progress only on this device.</small>
+      <small class="help">This version includes all 12 months of the reading plan. The active schedule begins with Month 4 on Tuesday, May 5, 2026, then continues Month 5, Month 6, and so on.</small>
       <div class="button-row" style="margin-top:14px">
         <button class="action secondary" id="clearProgress">Reset progress</button>
+        <button class="action secondary" id="clearNotes">Delete notes</button>
       </div>
       <small class="help">To install: open this page in Safari or Chrome, then use “Add to Home Screen.”</small>
     </article>
@@ -208,19 +215,24 @@ function renderSettings() {
   document.getElementById("clearProgress").addEventListener("click", () => {
     if (confirm("Reset all reading progress on this device?")) {
       progress = {};
-      saveProgress();
+      saveJson(STORAGE_KEY, progress);
+      render();
+    }
+  });
+  document.getElementById("clearNotes").addEventListener("click", () => {
+    if (confirm("Delete all notes on this device?")) {
+      notes = {};
+      saveJson(NOTES_KEY, notes);
       render();
     }
   });
 }
-
 function render() {
   renderToday();
   renderWeek();
   renderCatchup();
   renderSettings();
 }
-
 document.querySelectorAll(".tab").forEach(button => {
   button.addEventListener("click", () => {
     document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
@@ -229,9 +241,7 @@ document.querySelectorAll(".tab").forEach(button => {
     document.getElementById(button.dataset.view + "View").classList.add("active");
   });
 });
-
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => navigator.serviceWorker.register("service-worker.js"));
 }
-
 render();
