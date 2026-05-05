@@ -264,3 +264,8 @@ footer {
   color: var(--ink);
   resize: vertical;
 }
+.brand-mark img {
+  width: 70%;
+  height: 70%;
+  object-fit: contain;
+}
