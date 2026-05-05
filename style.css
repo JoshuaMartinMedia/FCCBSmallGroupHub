@@ -34,13 +34,26 @@ body {
 }
 
 .brand-mark {
+  flex: 0 0 48px;
   width: 48px;
   height: 48px;
+  min-width: 48px;
+  min-height: 48px;
   border: 2px solid rgba(255,255,255,.72);
   border-radius: 50%;
   display: grid;
   place-items: center;
-  font-size: 28px;
+  overflow: hidden;
+  background: rgba(255,255,255,.12);
+}
+
+.brand-mark img {
+  display: block;
+  width: 34px;
+  height: 34px;
+  max-width: 34px;
+  max-height: 34px;
+  object-fit: contain;
 }
 
 h1, h2, h3, p { margin: 0; }
@@ -262,9 +275,4 @@ footer {
   background: #fffaf0;
   color: var(--ink);
   resize: vertical;
-}
-.brand-mark img {
-  width: 70%;
-  height: 70%;
-  object-fit: contain;
 }
