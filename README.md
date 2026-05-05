@@ -1,17 +1,10 @@
-# FCCB Small Groups Hub v2
+# FCCB Small Groups Hub v7
 
 A tiny Progressive Web App for small-group Bible reading schedules.
 
-## v2 upgrades
+## v7 upgrades
 
-- Full 12-month Navigators Bible Reading Plan data
-- Active schedule starts with Month 4 on Tuesday, May 5, 2026
-- Mark whole day complete button
-- Clear day button
-- Notes / Reflection section for every reading day
-- Local progress and notes saved privately on each person's device
-- Sunday service and Monday Bible study cards
-- Offline caching after first load
+- Added linking to Bible.com
 
 ## Uploading to GitHub Pages
 
