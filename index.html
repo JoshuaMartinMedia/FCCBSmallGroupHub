@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FCCB Small Groups Hub</title>
+  <meta name="theme-color" content="#6f4e37">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand-mark">✝</div>
+    <div>
+      <h1>FCCB Small Groups Hub</h1>
+      <p>Men’s Bible Study · Bible in a Year</p>
+    </div>
+  </header>
+
+  <main>
+    <section class="card hero">
+      <div>
+        <p class="eyebrow" id="dateLabel">Today</p>
+        <h2 id="todayTitle">Loading…</h2>
+        <p id="todaySub">Preparing your readings.</p>
+      </div>
+      <div class="progress-ring">
+        <span id="todayPercent">0%</span>
+      </div>
+    </section>
+
+    <nav class="tabs" aria-label="App views">
+      <button class="tab active" data-view="today">Today</button>
+      <button class="tab" data-view="week">This Week</button>
+      <button class="tab" data-view="catchup">Catch Up</button>
+      <button class="tab" data-view="settings">Settings</button>
+    </nav>
+
+    <section id="todayView" class="view active"></section>
+    <section id="weekView" class="view"></section>
+    <section id="catchupView" class="view"></section>
+    <section id="settingsView" class="view"></section>
+  </main>
+
+  <footer>
+    <p>Progress is saved privately on this device.</p>
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
