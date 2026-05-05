@@ -1,8 +1,8 @@
-# FCCB Small Groups Hub v5
+# FCCB Small Groups Hub v6
 
 A tiny Progressive Web App for small-group Bible reading schedules.
 
-## v5 upgrades
+## v6 upgrades
 
 - Trying to fix the logo
 ## Uploading to GitHub Pages
